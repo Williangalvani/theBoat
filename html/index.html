@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Boat control</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="../dist/leaflet.css" />
+
+</head>
+<body style="position: absolute;
+       top: 20px; /* Header Height */
+       bottom: 20px; /* Footer Height */
+       width: 100%;">
+	<div id="map" style="width: 100%; height:100%; float:left;"></div>
+	<script src="../dist/jquery-1.11.3.min.js"></script>	
+	<script src="../dist/leaflet.js"></script>
+	<script>
+
+		var map = L.map('map').setView([62.79, 22.82], 13);
+		L.tileLayer('http://192.168.0.14:5000/img/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+		}).addTo(map);
+
+
+		var marker = L.marker([62.79, 22.82]).addTo(map)
+			.bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
+
+		var targetmarker = L.marker([62.79, 22.82],{draggable:'true'})
+		targetmarker.on('dragend', function(event){
+            var marker = event.target;
+            var position = marker.getLatLng();
+            //alert(position);
+            marker.setLatLng(position,{draggable:'true'}).bindPopup(position).update();
+    });
+//		L.circle([51.508, -0.11], 500, {
+//			color: 'red',
+//			fillColor: '#f03',
+//			fillOpacity: 0.5
+//		}).addTo(map).bindPopup("I am a circle.");
+
+//		L.polygon([
+//			[51.509, -0.08],
+//			[51.503, -0.06],
+//			[51.51, -0.047]
+//		]).addTo(map).bindPopup("I am a polygon.");
+
+
+		var popup = L.popup();
+
+		function onMapClick(e) {
+/*			popup
+				.setLatLng(e.latlng)
+				.setContent("You clicked the map at " + e.latlng.toString())
+				.openOn(map); */
+			targetmarker.setLatLng(e.latlng).addTo(map);
+		}
+
+		map.on('click', onMapClick);
+
+		var posting = function(){
+		var jqxhr = $.getJSON( "/gps", function() {
+		  console.log( "success" );
+		  if(jqxhr.responseJSON[2]){
+		  marker.setLatLng(L.latLng(jqxhr.responseJSON[0], jqxhr.responseJSON[1]));
+		  marker.update();
+		  $("#popup").html("fix:" +jqxhr.responseJSON[2] + "<br>Lat:" + jqxhr.responseJSON[0] + "<br>Lon:"+jqxhr.responseJSON[1]);
+		}
+		
+		  console.log(marker.getLatLng());
+		})
+		  .done(function() {
+		    console.log( "second success" );
+		  })
+		  .fail(function() {
+		    console.log( "error" );
+		  })
+		  .always(function() {
+		    console.log( "complete" );
+		  });
+		}
+
+		var t=setInterval(posting,1000);
+
+	</script>
+</body>
+</html>
