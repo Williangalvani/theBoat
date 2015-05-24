@@ -63,6 +63,7 @@
 		var posting = function(){
 		var jqxhr = $.getJSON( "/gps", function() {
 		  console.log( "success" );
+		  console.log(jqxhr.responseJSON);
 		  if(jqxhr.responseJSON[2]){
 		  marker.setLatLng(L.latLng(jqxhr.responseJSON[0], jqxhr.responseJSON[1]));
 		  marker.update();
