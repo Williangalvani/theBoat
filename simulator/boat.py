@@ -23,10 +23,11 @@ class Boat(pygame.sprite.Sprite):
         self.rudder = 0
         self.motor = 0.3
 
-        self.dirPID = PID(1,0,0)
+        self.dirPID = PID(0.3,0,0)
+        self.speedPID = PID(-0.001,0,0)
 
-        self.analogData = AnalogData(10000)
-        self.analogPlot = AnalogPlot(self.analogData)
+        # self.analogData = AnalogData(10000)
+        # self.analogPlot = AnalogPlot(self.analogData)
 
 
     def acelerate(self,power):
@@ -35,7 +36,7 @@ class Boat(pygame.sprite.Sprite):
         :param power: 0-100
         :return:
         """
-        self.motor = power / 100.0
+        self.motor = min(power / 100.0,5)
 
     def turn(self, direction):
         self.rudder = max(min(direction, MAXTURN), -MAXTURN)
@@ -50,8 +51,11 @@ class Boat(pygame.sprite.Sprite):
         y,x = targetdir,self.direction
         self.rudder = self.dirPID.update(error=min(y-x, y-x+360, y-x-360, key=abs))
 
-        self.analogData.add(self.direction)
-        self.analogPlot.update(self.analogData)
+        distance = sqrt((targetx-x)**2 + (targety -y)**2)
+        self.motor = min(self.speedPID.update(distance),2)
+
+        # self.analogData.add(self.direction)
+        # self.analogPlot.update(self.analogData)
 
     def update(self):
         "walk or spin, depending on the monkeys state"
