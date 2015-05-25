@@ -81,130 +81,131 @@
     <script src="../dist/jquery-1.11.3.min.js"></script>    
     <script src="../dist/leaflet.js"></script>
     <script>
+var waypoints = null;
 
-        var waypoints = null;
-
-        $(document).ready( function(){
-
-
-        var map = L.map('map').setView([62.79, 22.82], 13);
-        L.tileLayer('/img/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-        }).addTo(map);
+$(document).ready(function() {
 
 
-        var marker = L.marker([62.79, 22.82]).addTo(map)
-            .bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
+    var map = L.map('map').setView([62.79, 22.82], 13);
+    L.tileLayer('/img/{z}/{x}-{y}.png', {
+        maxZoom: 18,
+    }).addTo(map);
 
 
-        var targetmarker = L.marker([62.79, 22.82],{draggable:'true'})
-        targetmarker.on('dragend', function(event){
-            var marker = event.target;
-            var position = marker.getLatLng();
-            //alert(position);
-            marker.setLatLng(position,{draggable:'true'}).bindPopup(position).update();
+    var marker = L.marker([62.79, 22.82]).addTo(map)
+        .bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
+
+
+    var targetmarker = L.marker([62.79, 22.82], {
+        draggable: 'true'
+    })
+    targetmarker.on('dragend', function(event) {
+        var marker = event.target;
+        var position = marker.getLatLng();
+        //alert(position);
+        marker.setLatLng(position, {
+            draggable: 'true'
+        }).bindPopup(position).update();
     });
-//      L.circle([51.508, -0.11], 500, {
-//          color: 'red',
-//          fillColor: '#f03',
-//          fillOpacity: 0.5
-//      }).addTo(map).bindPopup("I am a circle.");
+    //      L.circle([51.508, -0.11], 500, {
+    //          color: 'red',
+    //          fillColor: '#f03',
+    //          fillOpacity: 0.5
+    //      }).addTo(map).bindPopup("I am a circle.");
 
-//      L.polygon([
-//          [51.509, -0.08],
-//          [51.503, -0.06],
-//          [51.51, -0.047]
-//      ]).addTo(map).bindPopup("I am a polygon.");
+    //      L.polygon([
+    //          [51.509, -0.08],
+    //          [51.503, -0.06],
+    //          [51.51, -0.047]
+    //      ]).addTo(map).bindPopup("I am a polygon.");
 
-        var reloadwaypoints = function(waypointsa){
-            var arrayLength = waypointsa.length;
-            var rawdata = "";
-            for (var i = 0; i < arrayLength; i++) {
-                rawdata = rawdata + "<li><a>Point"+i+"</a> <a class='glyphicon glyphicon-remove waypointdelete' href='#' id='w-"+1+"'></a></li>";
-            };
-            $("#waypointul").html(rawdata);
-            $(".waypointdelete").click( function(){
-              var id = $(this).attr("id").split('-')[1];
-
-              $.getJSON( "/delwaypoint/"+id, function( data ){
-
-                    reloadwaypoints(data);
-                    var latlngarray = reloadwaypointsonmap(data);
-                    waypoints.setLatLngs([latlngarray]);
-                    targetmarker.setLatLng(latlngarray[0]).addTo(map);
-                    targetmarker.update();
-              });
-            })
-
-
-
+    var reloadwaypoints = function(waypointsa) {
+        var arrayLength = waypointsa.length;
+        var rawdata = "";
+        for (var i = 0; i < arrayLength; i++) {
+            rawdata = rawdata + "<li><a>Point" + i + "</a> <a class='glyphicon glyphicon-remove waypointdelete' href='#' id='w-" + 1 + "'></a></li>";
         };
+        $("#waypointul").html(rawdata);
+        $(".waypointdelete").click(function() {
+            var id = $(this).attr("id").split('-')[1];
 
+            $.getJSON("/delwaypoint/" + id, function(data) {
 
-
-
-
-        var popup = L.popup();
-
-
-
-        var reloadwaypointsonmap = function(data) {
-                    var latlngarray = []
-                    var arrayLength = data.length;
-                    for (var i = 0; i < arrayLength; i++) {
-                        var pair = data[i]; 
-                        latlngarray.push(L.latLng(pair[0],pair[1]));
-                        console.log(pair);
-
-                    };
-                    if(!!!waypoints)
-                    {
-                        waypoints = L.multiPolyline(latlngarray).addTo(map);
-                    }else{
-                        waypoints.setLatLngs([latlngarray]);
-                    };
-            return latlngarray;
-        };
-
-        function onMapClick(e) {
-                var lat = e.latlng.lat;
-                var lng = e.latlng.lng;
-                $.getJSON( "/newwaypoint/"+lat+"/"+lng, function( data ) {
-                    var latlngarray = reloadwaypointsonmap(data);
-                    waypoints.setLatLngs([latlngarray]);  
-                    reloadwaypoints(data);
-                //alert( "Load was performed." );
+                reloadwaypoints(data);
+                var latlngarray = reloadwaypointsonmap(data);
+                waypoints.setLatLngs([latlngarray]);
+                targetmarker.setLatLng(latlngarray[0]).addTo(map);
+                targetmarker.update();
             });
-            targetmarker.setLatLng(e.latlng).addTo(map);
-        }
-
-        map.on('click', onMapClick);
-
-        var posting = function(){
-        var jqxhr = $.getJSON( "/gps", function() {
-          //console.log( "success" );
-          //console.log(jqxhr.responseJSON);
-          if(jqxhr.responseJSON[2]){
-          marker.setLatLng(L.latLng(jqxhr.responseJSON[0], jqxhr.responseJSON[1]));
-          marker.update();
-          $("#popup").html("fix:" +jqxhr.responseJSON[2] + "<br>Lat:" + jqxhr.responseJSON[0] + "<br>Lon:"+jqxhr.responseJSON[1]);
-        }
-        
-          //console.log(marker.getLatLng());
         })
-          .done(function() {
-            //console.log( "second success" );
-          })
-          .fail(function() {
-            //console.log( "error" );
-          })
-          .always(function() {
-            //console.log( "complete" );
-          });
-        }
 
-        var t=setInterval(posting,1000);
-    });
+
+
+    };
+
+
+
+
+    var popup = L.popup();
+
+
+
+    var reloadwaypointsonmap = function(data) {
+        var latlngarray = []
+        var arrayLength = data.length;
+        for (var i = 0; i < arrayLength; i++) {
+            var pair = data[i];
+            latlngarray.push(L.latLng(pair[0], pair[1]));
+            console.log(pair);
+
+        };
+        if (!!!waypoints) {
+            waypoints = L.multiPolyline(latlngarray).addTo(map);
+        } else {
+            waypoints.setLatLngs([latlngarray]);
+        };
+        return latlngarray;
+    };
+
+    function onMapClick(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        $.getJSON("/newwaypoint/" + lat + "/" + lng, function(data) {
+            var latlngarray = reloadwaypointsonmap(data);
+            waypoints.setLatLngs([latlngarray]);
+            reloadwaypoints(data);
+            //alert( "Load was performed." );
+        });
+        targetmarker.setLatLng(e.latlng).addTo(map);
+    }
+
+    map.on('click', onMapClick);
+
+    var posting = function() {
+        var jqxhr = $.getJSON("/gps", function() {
+                //console.log( "success" );
+                //console.log(jqxhr.responseJSON);
+                if (jqxhr.responseJSON[2]) {
+                    marker.setLatLng(L.latLng(jqxhr.responseJSON[0], jqxhr.responseJSON[1]));
+                    marker.update();
+                    $("#popup").html("fix:" + jqxhr.responseJSON[2] + "<br>Lat:" + jqxhr.responseJSON[0] + "<br>Lon:" + jqxhr.responseJSON[1]);
+                }
+
+                //console.log(marker.getLatLng());
+            })
+            .done(function() {
+                //console.log( "second success" );
+            })
+            .fail(function() {
+                //console.log( "error" );
+            })
+            .always(function() {
+                //console.log( "complete" );
+            });
+    }
+
+    var t = setInterval(posting, 1000);
+});
     </script>
 </div>
 
