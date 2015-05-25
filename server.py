@@ -3,14 +3,14 @@ import os
 import json
 
 from imageCache import ImageLoader
-from gps import GpsReader
+from gps import Boat
 
 app = Flask(__name__)
 
 loader = ImageLoader()
 
-gps = GpsReader()
-gps.start()
+boat = Boat()
+boat.start()
 
 @app.route('/')
 def hello_world():
@@ -20,6 +20,11 @@ def hello_world():
 @app.route('/dist/<path:path>')
 def staticfile(path):
     return send_from_directory("/home/pi/theBoat/html/dist", path)
+
+
+@app.route('/fonts/<path:path>')
+def staticfile2(path):
+    return send_from_directory("/home/pi/theBoat/html/dist/fonts", path)
 
 
 @app.route('/img/<zoom>/<lat>/<lon>.png')
@@ -34,9 +39,23 @@ def getmap(zoom, lat, lon):
 
 @app.route('/gps')
 def getGps():
-    data = gps.getLatLon()
+    data = boat.getLatLon()
     #print data
     return json.dumps(data)
+
+@app.route('/newwaypoint/<lat>/<lon>')
+def setWaypoint(lat,lon):
+    boat.waypoints.insert(0,(lat,lon))
+    return json.dumps(boat.waypoints)
+
+@app.route('/delwaypoint/<ida>')
+def delWaypoint(ida):
+    boat.waypoints.remove(boat.waypoints[int(ida)-1])
+    return json.dumps(boat.waypoints)
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -45,4 +64,4 @@ if __name__ == '__main__':
     except Exception, e:
         print e
     finally:
-        gps.running = False
+        boat.stop()

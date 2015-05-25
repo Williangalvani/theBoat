@@ -14,6 +14,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="/dist/bootstrap.min.css" rel="stylesheet">
+     <link href="/dist/custom.css" rel="stylesheet">      
 
     <!-- Custom styles for this template 
     <link href="navbar-static-top.css" rel="stylesheet">    -->
@@ -49,15 +50,13 @@
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Dropdown <span class="caret"></span></a>
-              <ul class="dropdown-menu" role="menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Waypoints <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu" id="waypointul">
+                <!--<li><a href="#">Action</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header">Nav header</li>
                 <li><a href="#">Separated link</a></li>
-                <li><a href="#">One more separated link</a></li>
+                <li><a href="#">One more separated link</a></li>-->
               </ul>
             </li>
           </ul>
@@ -83,7 +82,10 @@
     <script src="../dist/leaflet.js"></script>
     <script>
 
+        var waypoints = null;
+
         $(document).ready( function(){
+
 
         var map = L.map('map').setView([62.79, 22.82], 13);
         L.tileLayer('/img/{z}/{x}/{y}.png', {
@@ -93,6 +95,7 @@
 
         var marker = L.marker([62.79, 22.82]).addTo(map)
             .bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
+
 
         var targetmarker = L.marker([62.79, 22.82],{draggable:'true'})
         targetmarker.on('dragend', function(event){
@@ -113,14 +116,65 @@
 //          [51.51, -0.047]
 //      ]).addTo(map).bindPopup("I am a polygon.");
 
+        var reloadwaypoints = function(waypointsa){
+            var arrayLength = waypointsa.length;
+            var rawdata = "";
+            for (var i = 0; i < arrayLength; i++) {
+                rawdata = rawdata + "<li><a>Point"+i+"</a> <a class='glyphicon glyphicon-remove waypointdelete' href='#' id='w-"+1+"'></a></li>";
+            };
+            $("#waypointul").html(rawdata);
+            $(".waypointdelete").click( function(){
+              var id = $(this).attr("id").split('-')[1];
+
+              $.getJSON( "/delwaypoint/"+id, function( data ){
+
+                    reloadwaypoints(data);
+                    var latlngarray = reloadwaypointsonmap(data);
+                    waypoints.setLatLngs([latlngarray]);
+                    targetmarker.setLatLng(latlngarray[0]).addTo(map);
+                    targetmarker.update();
+              });
+            })
+
+
+
+        };
+
+
+
+
 
         var popup = L.popup();
 
+
+
+        var reloadwaypointsonmap = function(data) {
+                    var latlngarray = []
+                    var arrayLength = data.length;
+                    for (var i = 0; i < arrayLength; i++) {
+                        var pair = data[i]; 
+                        latlngarray.push(L.latLng(pair[0],pair[1]));
+                        console.log(pair);
+
+                    };
+                    if(!!!waypoints)
+                    {
+                        waypoints = L.multiPolyline(latlngarray).addTo(map);
+                    }else{
+                        waypoints.setLatLngs([latlngarray]);
+                    };
+            return latlngarray;
+        };
+
         function onMapClick(e) {
-/*          popup
-                .setLatLng(e.latlng)
-                .setContent("You clicked the map at " + e.latlng.toString())
-                .openOn(map); */
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                $.getJSON( "/newwaypoint/"+lat+"/"+lng, function( data ) {
+                    var latlngarray = reloadwaypointsonmap(data);
+                    waypoints.setLatLngs([latlngarray]);  
+                    reloadwaypoints(data);
+                //alert( "Load was performed." );
+            });
             targetmarker.setLatLng(e.latlng).addTo(map);
         }
 
@@ -128,24 +182,24 @@
 
         var posting = function(){
         var jqxhr = $.getJSON( "/gps", function() {
-          console.log( "success" );
-          console.log(jqxhr.responseJSON);
+          //console.log( "success" );
+          //console.log(jqxhr.responseJSON);
           if(jqxhr.responseJSON[2]){
           marker.setLatLng(L.latLng(jqxhr.responseJSON[0], jqxhr.responseJSON[1]));
           marker.update();
           $("#popup").html("fix:" +jqxhr.responseJSON[2] + "<br>Lat:" + jqxhr.responseJSON[0] + "<br>Lon:"+jqxhr.responseJSON[1]);
         }
         
-          console.log(marker.getLatLng());
+          //console.log(marker.getLatLng());
         })
           .done(function() {
-            console.log( "second success" );
+            //console.log( "second success" );
           })
           .fail(function() {
-            console.log( "error" );
+            //console.log( "error" );
           })
           .always(function() {
-            console.log( "complete" );
+            //console.log( "complete" );
           });
         }
 

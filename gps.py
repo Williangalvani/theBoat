@@ -4,24 +4,34 @@ import threading
 import time
 
 
-class GpsReader(threading.Thread):
+class Boat(threading.Thread):
     def __init__(self):
-        super(GpsReader, self).__init__()
+        super(Boat, self).__init__()
         self.lat = 0
         self.lon = 0
         self.fix = False
-        self.running = True
-        print "resetting"
+        self.waypoints = []
+
+        self.gps = GpsReader(self)
+        self.gps.start()
+
+
+    def stop(self):
+        self.gps.running = False
 
     def getLatLon(self):
-        #print self
-        #print self.fix, self.lat, self.lon
-        return [ self.lat, self.lon, self.fix]
+        return [self.lat, self.lon, self.fix]
+
+
+class GpsReader(threading.Thread):
+    def __init__(self, boat):
+        super(GpsReader, self).__init__()
+        self.boat = boat
+        self.running = True
 
     def run(self):
 
         ser = serial.Serial('/dev/ttyUSB0', 4800)
-        print "starting loop"
         while self.running:
 
             myline = ser.readline()
@@ -32,20 +42,18 @@ class GpsReader(threading.Thread):
                 # Ask the object to parse the data
                 gpgga.parse(myline)
 
-                time2 = float(gpgga.timestamp)
+                #time2 = float(gpgga.timestamp)
                 lat = float(gpgga.latitude)
                 lon = float(gpgga.longitude)
 
-                self.lat = lat
-                self.lon = lon
-                #print self.fix, self.lat, self.lon
-                # print "Time %f Lat %f Long %f" % ( time2, lat, lon)
+                self.boat.lat = lat
+                self.boat.lon = lon
 
             elif (myline.startswith("$GPGSA")):
                 gpgsa.parse(myline)
                 # print gpgsa.mode, gpgsa.mode_fix_type
                 if gpgsa.mode_fix_type != "3" and gpgsa.mode_fix_type != "2":
                     #print "No fix!", gpgsa.mode_fix_type
-                    self.fix = False
+                    self.boat.fix = False
                 else:
-                    self.fix = True
+                    self.boat.fix = True
