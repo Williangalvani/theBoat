@@ -45,12 +45,12 @@ def getGps():
 
 @app.route('/newwaypoint/<lat>/<lon>')
 def setWaypoint(lat,lon):
-    boat.waypoints.insert(0,(lat,lon))
+    boat.waypoints.append((lat,lon))
     return json.dumps(boat.waypoints)
 
 @app.route('/delwaypoint/<ida>')
 def delWaypoint(ida):
-    boat.waypoints.remove(boat.waypoints[int(ida)-1])
+    boat.waypoints.remove(boat.waypoints[int(ida)])
     return json.dumps(boat.waypoints)
 
 

@@ -86,7 +86,7 @@ var waypoints = null;
 $(document).ready(function() {
 
 
-    var map = L.map('map').setView([62.79, 22.82], 13);
+    var map = L.map('map').setView([62.79, 22.82], 18);
     L.tileLayer('/img/{z}/{x}-{y}.png', {
         maxZoom: 18,
     }).addTo(map);
@@ -123,7 +123,7 @@ $(document).ready(function() {
         var arrayLength = waypointsa.length;
         var rawdata = "";
         for (var i = 0; i < arrayLength; i++) {
-            rawdata = rawdata + "<li><a>Point" + i + "</a> <a class='glyphicon glyphicon-remove waypointdelete' href='#' id='w-" + 1 + "'></a></li>";
+            rawdata = rawdata + "<li><a>Point" + i + "</a> <a class='glyphicon glyphicon-remove waypointdelete' href='#' id='w-" + i + "'></a></li>";
         };
         $("#waypointul").html(rawdata);
         $(".waypointdelete").click(function() {
@@ -134,7 +134,7 @@ $(document).ready(function() {
                 reloadwaypoints(data);
                 var latlngarray = reloadwaypointsonmap(data);
                 waypoints.setLatLngs([latlngarray]);
-                targetmarker.setLatLng(latlngarray[0]).addTo(map);
+                targetmarker.setLatLng(latlngarray[latlngarray.length-1]).addTo(map);
                 targetmarker.update();
             });
         })
