@@ -112,6 +112,8 @@ $(document).ready(function() {
         var marker = event.target;
         var position = marker.getLatLng();
         //alert(position);
+        console.log(event.target);
+        moveLastWaypoint(event.target);    
         marker.setLatLng(position, {
             draggable: 'true'
         }).bindPopup(position).update();
@@ -170,6 +172,18 @@ $(document).ready(function() {
             //alert( "Load was performed." );
         });
         targetmarker.setLatLng(e.latlng).addTo(map);
+    }
+
+    function moveLastWaypoint(e) {
+        var lat = e._latlng.lat;
+        var lng = e._latlng.lng;
+        $.getJSON("/movelastwaypoint/" + lat + "/" + lng, function(data) {
+            var latlngarray = reloadwaypointsonmap(data);
+            waypoints.setLatLngs([latlngarray]);
+            reloadwaypoints(data);
+            //alert( "Load was performed." );
+        });
+        //targetmarker.setLatLng(e.latlng).addTo(map);
     }
 
     map.on('click', AddWaypoint);
