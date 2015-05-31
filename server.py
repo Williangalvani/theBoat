@@ -27,7 +27,7 @@ def staticfile2(path):
     return send_from_directory("/home/pi/theBoat/html/dist/fonts", path)
 
 
-@app.route('/img/<zoom>/<lat>/<lon>.png')
+@app.route('/img/<zoom>/<lat>-<lon>.png')
 def getmap(zoom, lat, lon):
     print zoom, lat, lon
     #return loader.get_image(lat,lon,zoom)

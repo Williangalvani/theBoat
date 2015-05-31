@@ -8,7 +8,7 @@ import time
 import pygame
 WHERE_AM_I = abspath(dirname(__file__))
 
-cachedir = join(WHERE_AM_I, "cache")
+cachedir = join(WHERE_AM_I, "cache","img")
 
 
 class Tile(pygame.sprite.Sprite):
