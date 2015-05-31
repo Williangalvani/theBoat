@@ -48,6 +48,10 @@ def setWaypoint(lat,lon):
     boat.waypoints.append((lat,lon))
     return json.dumps(boat.waypoints)
 
+@app.route('/getwaypoints')
+def getWaypoints():
+    return json.dumps(boat.waypoints)
+
 @app.route('/delwaypoint/<ida>')
 def delWaypoint(ida):
     boat.waypoints.remove(boat.waypoints[int(ida)])

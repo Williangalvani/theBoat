@@ -86,16 +86,25 @@ var waypoints = null;
 $(document).ready(function() {
 
 
+    $(function() {   /// disable close dropdown on click remove button
+    $("ul.dropdown-menu").on("click", "[data-stopPropagation]", function(e) {
+        e.stopPropagation();
+    });
+});
+
+    //// setup map
     var map = L.map('map').setView([62.79, 22.82], 18);
     L.tileLayer('/img/{z}/{x}-{y}.png', {
-        maxZoom: 18,
+        maxZoom: 19,
     }).addTo(map);
 
 
+    /// create position marker
     var marker = L.marker([62.79, 22.82]).addTo(map)
         .bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
 
 
+    /// create target waypoints marker
     var targetmarker = L.marker([62.79, 22.82], {
         draggable: 'true'
     })
@@ -107,23 +116,15 @@ $(document).ready(function() {
             draggable: 'true'
         }).bindPopup(position).update();
     });
-    //      L.circle([51.508, -0.11], 500, {
-    //          color: 'red',
-    //          fillColor: '#f03',
-    //          fillOpacity: 0.5
-    //      }).addTo(map).bindPopup("I am a circle.");
 
-    //      L.polygon([
-    //          [51.509, -0.08],
-    //          [51.503, -0.06],
-    //          [51.51, -0.047]
-    //      ]).addTo(map).bindPopup("I am a polygon.");
+    ///create coordinates popup
+    var popup = L.popup();
 
     var reloadwaypoints = function(waypointsa) {
         var arrayLength = waypointsa.length;
         var rawdata = "";
         for (var i = 0; i < arrayLength; i++) {
-            rawdata = rawdata + "<li><a>Point" + i + "</a> <a class='glyphicon glyphicon-remove waypointdelete' href='#' id='w-" + i + "'></a></li>";
+            rawdata = rawdata + "<li><a>Point" + i + "</a> <a class='glyphicon glyphicon-remove waypointdelete' data-stopPropagation='true' href='#' id='w-" + i + "'></a></li>";
         };
         $("#waypointul").html(rawdata);
         $(".waypointdelete").click(function() {
@@ -138,15 +139,7 @@ $(document).ready(function() {
                 targetmarker.update();
             });
         })
-
-
-
     };
-
-
-
-
-    var popup = L.popup();
 
 
 
@@ -167,7 +160,7 @@ $(document).ready(function() {
         return latlngarray;
     };
 
-    function onMapClick(e) {
+    function AddWaypoint(e) {
         var lat = e.latlng.lat;
         var lng = e.latlng.lng;
         $.getJSON("/newwaypoint/" + lat + "/" + lng, function(data) {
@@ -179,9 +172,22 @@ $(document).ready(function() {
         targetmarker.setLatLng(e.latlng).addTo(map);
     }
 
-    map.on('click', onMapClick);
+    map.on('click', AddWaypoint);
 
-    var posting = function() {
+    var loadWaypoints = function()
+    {
+         $.getJSON("/getwaypoints", function(data) {
+                var latlngarray = reloadwaypointsonmap(data);
+                waypoints.setLatLngs([latlngarray]);
+                reloadwaypoints(data);
+                //alert( "Load was performed." );
+            });
+           
+    };
+
+    loadWaypoints();
+
+    var updateLocation = function() {
         var jqxhr = $.getJSON("/gps", function() {
                 //console.log( "success" );
                 //console.log(jqxhr.responseJSON);
@@ -204,7 +210,7 @@ $(document).ready(function() {
             });
     }
 
-    var t = setInterval(posting, 1000);
+    var t = setInterval(updateLocation, 1000);
 });
     </script>
 </div>
