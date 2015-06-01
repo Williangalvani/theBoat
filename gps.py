@@ -2,7 +2,7 @@ import serial
 from pynmea import nmea
 import threading
 import time
-
+import math
 
 class Boat(threading.Thread):
     def __init__(self):
@@ -19,8 +19,11 @@ class Boat(threading.Thread):
     def stop(self):
         self.gps.running = False
 
+    def getDirection(self):
+        return math.pi
+
     def getLatLon(self):
-        return [self.lat, self.lon, self.fix]
+        return [self.lat, self.lon, self.fix, self.getDirection()]
 
 
 class GpsReader(threading.Thread):

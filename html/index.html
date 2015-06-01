@@ -83,8 +83,28 @@
     <script>
 var waypoints = null;
 
-$(document).ready(function() {
+L.RotatedMarker = L.Marker.extend({
+  options: { angle: 0 },
+  _setPos: function(pos) {
+    L.Marker.prototype._setPos.call(this, pos);
+    if (L.DomUtil.TRANSFORM) {
+      // use the CSS transform rule if available
+      this._icon.style[L.DomUtil.TRANSFORM] += ' rotate(' + this.options.angle + 'deg)';
+    } else if (L.Browser.ie) {
+      // fallback for IE6, IE7, IE8
+      var rad = this.options.angle * L.LatLng.DEG_TO_RAD,
+      costheta = Math.cos(rad),
+      sintheta = Math.sin(rad);
+      this._icon.style.filter += ' progid:DXImageTransform.Microsoft.Matrix(sizingMethod=\'auto expand\', M11=' +
+        costheta + ', M12=' + (-sintheta) + ', M21=' + sintheta + ', M22=' + costheta + ')';
+    }
+  }
+});
+L.rotatedMarker = function(pos, options) {
+    return new L.RotatedMarker(pos, options);
+};
 
+$(document).ready(function() {
 
     $(function() {   /// disable close dropdown on click remove button
     $("ul.dropdown-menu").on("click", "[data-stopPropagation]", function(e) {
@@ -100,9 +120,18 @@ $(document).ready(function() {
 
 
     /// create position marker
-    var marker = L.marker([62.79, 22.82]).addTo(map)
-        .bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
+  var marker = L.rotatedMarker(new L.LatLng(62.79, 22.82), {
+  icon: L.icon({
+        iconUrl: '/dist/images/arrow.png',
+        iconSize: [35, 35],
+      }),
+      draggable: false
+    });
 
+
+    //var marker = L.marker([62.79, 22.82]).addTo(map)
+    marker.bindPopup("<span id='popup'><b>Hello world!</b><br />I am a popup.</span>").openPopup();
+    marker.addTo(map);
 
     /// create target waypoints marker
     var targetmarker = L.marker([62.79, 22.82], {
@@ -142,7 +171,6 @@ $(document).ready(function() {
             });
         })
     };
-
 
 
     var reloadwaypointsonmap = function(data) {
@@ -208,7 +236,8 @@ $(document).ready(function() {
                 if (jqxhr.responseJSON[2]) {
                     marker.setLatLng(L.latLng(jqxhr.responseJSON[0], jqxhr.responseJSON[1]));
                     marker.update();
-                    $("#popup").html("fix:" + jqxhr.responseJSON[2] + "<br>Lat:" + jqxhr.responseJSON[0] + "<br>Lon:" + jqxhr.responseJSON[1]);
+                    $("#popup").html("fix:" + jqxhr.responseJSON[2] + "<br>Lat:" + jqxhr.responseJSON[0] + "<br>Lon:" + jqxhr.responseJSON[1] + "<br>Dir:" + jqxhr.responseJSON[3]);
+                    marker.options.angle = jqxhr.responseJSON[3] * (180 / Math.PI);
                 }
 
                 //console.log(marker.getLatLng());
