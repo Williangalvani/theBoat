@@ -14,8 +14,12 @@
 
     <!-- Bootstrap core CSS -->
     <link href="/dist/bootstrap.min.css" rel="stylesheet">
-     <link href="/dist/custom.css" rel="stylesheet">      
-
+    <link href="/dist/custom.css" rel="stylesheet">      
+    <script src="/dist/jquery-1.11.3.min.js"></script>    
+    <script src="../dist/leaflet.js"></script>
+    <link rel="stylesheet" href="/dist/jqueryui/jquery-ui.css">
+    <script src="/dist/jqueryui/jquery-ui.js"></script>
+    <script src="/dist/touch.js"></script>
     <!-- Custom styles for this template 
     <link href="navbar-static-top.css" rel="stylesheet">    -->
 
@@ -60,11 +64,12 @@
               </ul>
             </li>
           </ul>
+          <!--
           <ul class="nav navbar-nav navbar-right">
             <li><a href="../navbar/">Default</a></li>
             <li class="active"><a href="./">Static top <span class="sr-only">(current)</span></a></li>
             <li><a href="../navbar-fixed-top/">Fixed top</a></li>
-          </ul>
+          </ul>-->
         </div><!--/.nav-collapse -->
       </div>
     </nav>
@@ -78,9 +83,7 @@
        bottom: 0px; /* Footer Height */
        width: 100%;">
     <div id="map" style="width: 100%; height:100%; float:left;"></div>
-    <script src="../dist/jquery-1.11.3.min.js"></script>    
-    <script src="../dist/leaflet.js"></script>
-    <script>
+<script>
 var waypoints = null;
 
 L.RotatedMarker = L.Marker.extend({
@@ -260,18 +263,61 @@ $(document).ready(function() {
 
     </div> <!-- /container -->
 
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="/dist/bootstrap.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>
   </body>
 </html>
 
+<div id="draggable" class="ui-widget-content">
+  <p>camera goes here</p>
+</div>
 
+  <script>
+  $(function() {
+    $( "#draggable" ).draggable().resizable();
+  });
+  </script>
+ <div id='controller' class="joydiv-controller">
+      <div class="joydiv-up"></div>
+      <div class="joydiv-left"></div>
+      <div class="joydiv-right"></div>
+      <div class="joydiv-down"></div>
+      <div class="joydiv-trackpad">
+        <div class="joydiv-tracker"></div>
+      </div>
+    </div>
+    <input type="text" id="direction">
+  <script charset="UTF-8" src="/dist/joydiv.js"></script>
+  <script type="text/javascript">
+
+    var timeout = false;
+    var element = document.getElementById('controller');
+    var joydiv = new JoydivModule.Joydiv({'element':element});
+    element.addEventListener('joydiv-changed',function(e){
+       
+    try{  
+        var offset = e.detail.joydiv.getAllDirections()[0].offset;
+        var x = offset.x;
+        var y = offset.y;
+        if(!timeout || (x==0 && y==0))
+        {      
+          timeout = true;
+          $.get( "/setServosTo/"+x+"/"+y, function( data ){});
+          console.log(x,y);
+          setTimeout( function() {timeout=false}, 200);
+        }
+        }catch(err){
+        $.get( "/setServosTo/0/0", function( data ){});
+          console.log(err);
+        }
+      
+    });
+  </script>
+
+
+
+
+<body>
+ 
 
 
 <!DOCTYPE html>

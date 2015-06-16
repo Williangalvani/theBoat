@@ -37,6 +37,24 @@ def getmap(zoom, lat, lon):
 
 #return "" + zoom + "" + lat + "" + lon
 
+@app.route('/setServosTo/<x>/<y>')
+def setServosto(x,y):
+    x = 0.5+0.5*float(x)
+    y = 0.5+0.5*float(y)
+    x = max(min(1,x),-1)
+    y = max(min(1,y),-1)
+
+    rudder_str ="{0}={1}%\n".format(0, x*100.0)
+    throttle_str ="{0}={1}%\n".format(1, y*100.0)
+    print throttle_str
+
+    
+    with open("/dev/servoblaster", "wb") as f:
+        f.write(rudder_str)
+        f.write(throttle_str)        
+
+    return ""
+
 @app.route('/gps')
 def getGps():
     data = boat.getLatLon()

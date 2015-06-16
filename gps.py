@@ -3,6 +3,8 @@ from pynmea import nmea
 import threading
 import time
 import math
+import os
+
 
 class Boat(threading.Thread):
     def __init__(self):
@@ -24,6 +26,25 @@ class Boat(threading.Thread):
 
     def getLatLon(self):
         return [self.lat, self.lon, self.fix, self.getDirection()]
+
+
+    def moveRudder(self, position):
+        """
+        :param position: int [-100,100]
+        :return:
+        """
+        if -100 < position < 100:
+            position = (position + 100)*0.5
+            os.system("echo 0={0}% > /dev/servoblaster".format(position))
+
+    def setThrottle(self, position):
+        """
+        :param position: int [-100,100]
+        :return:
+        """
+        if -100 < position < 100:
+            position = (position + 100)*0.5
+            os.system("echo 1={0}% > /dev/servoblaster".format(position))
 
 
 class GpsReader(threading.Thread):
