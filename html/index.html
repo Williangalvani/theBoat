@@ -268,7 +268,33 @@ $(document).ready(function() {
 </html>
 
 <div id="draggable" class="ui-widget-content">
-  <p>camera goes here</p>
+    <img id='c'></img><br/>
+        <!--<button onclick='cmd("cmd","showpreview")'>show</button>
+        <button onclick='cmd("cmd","hidepreview")'>hide</button><br> -->
+        <input type='range' min=0 max=20 onchange='cmd("framerate",this.value)' />
+        <script>
+        //function for sending commands to websocket server
+            function cmd(ch,msg){
+                webSocket.send('{"'+ch+'":"'+msg+'"}');
+            }
+            var webSocket;
+            function ws(){
+                webSocket=webSocket = new WebSocket("ws://"+window.location.hostname+":9000/");
+                webSocket.onopen=function(){
+                    console.log("opened");
+                }
+                webSocket.onmessage=function(data){
+                    image = $('#c')[0]
+                    image.src='data:image/jpeg;base64,'+ data.data
+                }
+                webSocket.ondata=function(){
+                    console.log("msg received");
+                }
+            }
+            $(document).ready(function(){
+                ws();
+            });
+        </script>
 </div>
 
   <script>

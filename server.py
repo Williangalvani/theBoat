@@ -4,6 +4,7 @@ import json
 
 from imageCache import ImageLoader
 from gps import Boat
+from stream.picamstreamer import Streamer
 
 app = Flask(__name__)
 
@@ -11,6 +12,9 @@ loader = ImageLoader()
 
 boat = Boat()
 boat.start()
+
+streamer = Streamer()
+streamer.start()
 
 @app.route('/')
 def hello_world():
