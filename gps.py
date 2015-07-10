@@ -19,6 +19,9 @@ class Boat(threading.Thread):
         self.gps.start()
         self.mag = TelemetryReader()
 
+        self.dirPID = PID(0.3,0,0)
+        self.speedPID = PID(-0.001,0,0)
+
 
     def stop(self):
         self.gps.running = False
@@ -26,7 +29,6 @@ class Boat(threading.Thread):
     def getDirection(self):
         try:
             angle = math.radians(int(self.mag.attitude[2]))
-            print angle
             return angle
         except:
             return 0
@@ -52,6 +54,66 @@ class Boat(threading.Thread):
         if -100 < position < 100:
             position = (position + 100)*0.5
             os.system("echo 1={0}% > /dev/servoblaster".format(position))
+
+    def getDistanceAndBearingToCoordinate(self, coord):
+        lat,lon, fix, direction = self.getLatLon()
+        tlat,tlon = coord
+
+        tlat, tlon = float(tlat), float(tlon)
+
+        #from http://www.movable-type.co.uk/scripts/latlong.html
+
+        R = 6371000; #// m
+        dLat = math.radians(tlat-lat);
+        dLon = math.radians(tlon-lon);
+        lat1 = math.radians(lat);
+        lat2 = math.radians(tlat);
+
+        a = math.sin(dLat/2) * math.sin(dLat/2) + math.sin(dLon/2) * math.sin(dLon/2) * math.cos(lat1) * math.cos(lat2); 
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a)); 
+        d = R * c;
+
+        cos = math.cos
+        sin = math.sin
+        atan2 = math.atan2
+
+        lon1 = lon
+        lat1 = lat
+        lon2 = tlon
+        lat2 = tlat
+        tc1= atan2(sin(lon2-lon1)*cos(lat2),cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1)) % 2*math.pi
+
+        return d , math.degrees(tc1)
+
+    def controlloop():
+
+        current_heading = self.getDirection()
+        distance, targetdir = self.getDistanceAndBearingToCoordinate(self.waypoints[0])
+        
+        if distance < 5:
+            self.waypoints = self.waypoints[1:]
+            motor = 0
+            rudder = 0
+        else:
+            ##### rudder pid
+            y,x = targetdir, current_heading          
+            rudder = self.dirPID.update(error=min(y-x, y-x+360, y-x-360, key=abs))
+            ##### motor pid
+            motor = min(self.speedPID.update(distance),2)*0.3
+        moveRudder(rudder)
+        setThrottle(motor)
+
+
+
+    def run(self):
+        while self.gps.running:
+            if len(self.waypoints):
+                self.controlloop()
+            else:
+                print self.getDirection(), self.getLatLon()
+            time.sleep(0.1)
+
+
 
 
 class GpsReader(threading.Thread):
