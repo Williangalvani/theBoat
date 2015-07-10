@@ -4,6 +4,7 @@ import threading
 import time
 import math
 import os
+from comm import TelemetryReader
 
 
 class Boat(threading.Thread):
@@ -16,13 +17,19 @@ class Boat(threading.Thread):
 
         self.gps = GpsReader(self)
         self.gps.start()
+        self.mag = TelemetryReader()
 
 
     def stop(self):
         self.gps.running = False
 
     def getDirection(self):
-        return math.pi
+        try:
+            angle = math.radians(int(self.mag.attitude[2]))
+            print angle
+            return angle
+        except:
+            return 0
 
     def getLatLon(self):
         return [self.lat, self.lon, self.fix, self.getDirection()]
