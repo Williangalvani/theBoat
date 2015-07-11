@@ -66,8 +66,8 @@ class BroadcastServerFactory(WebSocketServerFactory):
         camwrite = self.broadcast
         cam = picamera.PiCamera()
         cam.framerate = 7
-        cam.vflip=True
-        cam.hflip=True
+        cam.vflip=False
+        cam.hflip=False
         cam.exposure_mode = 'night'
 
     def register(self, client):

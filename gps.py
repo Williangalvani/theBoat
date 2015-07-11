@@ -5,6 +5,7 @@ import time
 import math
 import os
 from comm import TelemetryReader
+from pid import PID
 
 
 class Boat(threading.Thread):
@@ -20,7 +21,7 @@ class Boat(threading.Thread):
         self.mag = TelemetryReader()
 
         self.dirPID = PID(0.3,0,0)
-        self.speedPID = PID(-0.001,0,0)
+        self.speedPID = PID(-0.005,0,0)
 
 
     def stop(self):
@@ -28,7 +29,13 @@ class Boat(threading.Thread):
 
     def getDirection(self):
         try:
-            angle = math.radians(int(self.mag.attitude[2]))
+
+            angle = self.mag.attitude[2]
+            if angle > 180:
+                angle-=360  
+            
+            print "----------------------ANGLE---------------" , angle
+            angle = math.radians(angle)
             return angle
         except:
             return 0
@@ -51,6 +58,7 @@ class Boat(threading.Thread):
         :param position: int [-100,100]
         :return:
         """
+        #print "RECEIVED -------------------------" ,position
         if -100 < position < 100:
             position = (position + 100)*0.5
             os.system("echo 1={0}% > /dev/servoblaster".format(position))
@@ -85,7 +93,7 @@ class Boat(threading.Thread):
 
         return d , math.degrees(tc1)
 
-    def controlloop():
+    def controlloop(self):
 
         current_heading = self.getDirection()
         distance, targetdir = self.getDistanceAndBearingToCoordinate(self.waypoints[0])
@@ -99,9 +107,11 @@ class Boat(threading.Thread):
             y,x = targetdir, current_heading          
             rudder = self.dirPID.update(error=min(y-x, y-x+360, y-x-360, key=abs))
             ##### motor pid
-            motor = min(self.speedPID.update(distance),2)*0.3
-        moveRudder(rudder)
-        setThrottle(motor)
+            motor = min(self.speedPID.update(distance),1)*100
+        self.moveRudder(rudder)
+        #print "----------MOTOOORRR--------", motor
+        #limit motor to 50%
+        self.setThrottle(min(motor,10))
 
 
 
@@ -110,7 +120,8 @@ class Boat(threading.Thread):
             if len(self.waypoints):
                 self.controlloop()
             else:
-                print self.getDirection(), self.getLatLon()
+                pass
+                #print self.getDirection(), self.getLatLon()
             time.sleep(0.1)
 
 
