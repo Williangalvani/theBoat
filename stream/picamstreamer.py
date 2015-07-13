@@ -88,7 +88,7 @@ class BroadcastServerFactory(WebSocketServerFactory):
         # print("broadcasting message '{}' ..".format(msg))
         for c in self.clients:
             c.sendMessage(msg.encode('base64'))
-            print("message sent to {}".format(c.peer))
+            #print("message sent to {}".format(c.peer))
 
 
 

@@ -20,7 +20,7 @@ class Boat(threading.Thread):
         self.gps.start()
         self.mag = TelemetryReader()
 
-        self.dirPID = PID(0.3,0,0)
+        self.dirPID = PID(35,0,0)
         self.speedPID = PID(-0.005,0,0)
 
 
@@ -34,7 +34,7 @@ class Boat(threading.Thread):
             if angle > 180:
                 angle-=360  
             
-            print "----------------------ANGLE---------------" , angle
+            #print "----------------------ANGLE---------------" , angle
             angle = math.radians(angle)
             return angle
         except:
@@ -62,6 +62,7 @@ class Boat(threading.Thread):
         if -100 < position < 100:
             position = (position + 100)*0.5
             os.system("echo 1={0}% > /dev/servoblaster".format(position))
+            print position
 
     def getDistanceAndBearingToCoordinate(self, coord):
         lat,lon, fix, direction = self.getLatLon()
@@ -89,33 +90,46 @@ class Boat(threading.Thread):
         lat1 = lat
         lon2 = tlon
         lat2 = tlat
-        tc1= atan2(sin(lon2-lon1)*cos(lat2),cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1)) % 2*math.pi
+        #tc1= atan2(sin(lon2-lon1)*cos(lat2),cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1)) % 2*math.pi
+        tc1 = atan2(lon2-lon1,lat2-lat1)
 
-        return d , math.degrees(tc1)
+        return d , tc1
 
     def controlloop(self):
 
         current_heading = self.getDirection()
         distance, targetdir = self.getDistanceAndBearingToCoordinate(self.waypoints[0])
         
-        if distance < 5:
+        y,x = targetdir, current_heading   
+        deviation = y-x
+        if deviation > math.pi:
+            deviation -= 2 * math.pi
+        elif deviation < -math.pi:
+            deviation += 2*math.pi
+
+        if distance < 15:
             self.waypoints = self.waypoints[1:]
             motor = 0
             rudder = 0
         else:
             ##### rudder pid
-            y,x = targetdir, current_heading          
-            rudder = self.dirPID.update(error=min(y-x, y-x+360, y-x-360, key=abs))
+                   
+            rudder = self.dirPID.update(error=deviation)
             ##### motor pid
-            motor = min(self.speedPID.update(distance),1)*100
-        self.moveRudder(rudder)
+            motor = min(max(self.speedPID.update(distance),0.62)*100,70)
+        self.moveRudder(rudder+15)
+        #print "----------------------------------rudder ------" , rudder , current_heading
         #print "----------MOTOOORRR--------", motor
         #limit motor to 50%
-        self.setThrottle(min(motor,10))
-
+        #print "HEADING: ", current_heading, "TARGET:" , targetdir, "DEVIATION:", deviation, "RUDDER:", rudder
+        self.setThrottle(motor*0.1)
+        print "distance:" , distance
 
 
     def run(self):
+        self.setThrottle(100)
+        time.sleep(1)
+        self.setThrottle(0)
         while self.gps.running:
             if len(self.waypoints):
                 self.controlloop()
